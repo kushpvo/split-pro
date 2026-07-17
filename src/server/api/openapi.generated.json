@@ -1973,6 +1973,142 @@
           }
         ]
       }
+    },
+    "/expense.addOrEditExpense": {
+      "post": {
+        "operationId": "expense.addOrEditExpense",
+        "tags": ["expense"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "groupId": {
+                      "type": ["number", "null"]
+                    },
+                    "amount": {
+                      "type": "integer",
+                      "format": "bigint"
+                    },
+                    "paidBy": {
+                      "type": "number"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "splitType": {
+                      "type": "string",
+                      "enum": [
+                        "EQUAL",
+                        "PERCENTAGE",
+                        "EXACT",
+                        "SHARE",
+                        "ADJUSTMENT",
+                        "SETTLEMENT",
+                        "CURRENCY_CONVERSION"
+                      ]
+                    },
+                    "participants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "userId": {
+                            "type": "number"
+                          },
+                          "amount": {
+                            "type": "integer",
+                            "format": "bigint"
+                          }
+                        },
+                        "required": ["userId", "amount"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "expenseDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "fileKey": {
+                      "type": "string"
+                    },
+                    "transactionId": {
+                      "type": "string"
+                    },
+                    "conversionToId": {
+                      "type": "string"
+                    },
+                    "expenseId": {
+                      "type": "string"
+                    },
+                    "cronExpression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "currency",
+                    "groupId",
+                    "amount",
+                    "paidBy",
+                    "category",
+                    "splitType",
+                    "participants"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

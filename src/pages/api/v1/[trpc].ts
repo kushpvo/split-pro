@@ -33,33 +33,17 @@ const isPlainValue = (v: string): string | number | boolean => {
 
 /**
  * Public REST API handler (API-key auth), mounted at `/api/v1/*`, e.g.
- * `GET /api/v1/user.me`. The wrapper:
- *
- * 1. Converts individual query params (`?groupId=150`) into tRPC's
- *    `?input={"groupId":150}` format, coercing values to numbers/booleans
- *    where obvious.
- * 2. Wraps plain-JSON `?input=` payloads as superjson format ({json: …}) so
- *    the server transformer (superjson) can deserialise them correctly.
+ * `GET /api/v1/user.me`. The wrapper converts individual query params
+ * (`?groupId=150`) into tRPC's `?input={"groupId":150}` format, coercing
+ * values to numbers/booleans where obvious. The API router's transformer is
+ * configured to tolerate plain JSON input, so this works for all query
+ * procedures including future ones.
  */
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if ('GET' === req.method && req.url) {
     const url = new URL(req.url, 'http://localhost');
-    const rawInput = url.searchParams.get('input');
 
-    if (rawInput) {
-      /* — `?input=<JSON>` — wrap in superjson format if needed */
-      try {
-        const parsed = JSON.parse(rawInput);
-
-        if (!('json' in parsed)) {
-          url.searchParams.set('input', JSON.stringify({ json: parsed }));
-          req.url = url.pathname + url.search;
-        }
-      } catch {
-        /* Leave malformed input alone — tRPC will surface the parse error */
-      }
-    } else {
-      /* — individual query params — build an `input` JSON object */
+    if (!url.searchParams.has('input')) {
       const params: Record<string, unknown> = {};
 
       url.searchParams.forEach((value, key) => {
@@ -69,7 +53,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       });
 
       if (0 < Object.keys(params).length) {
-        url.searchParams.set('input', JSON.stringify({ json: params }));
+        url.searchParams.set('input', JSON.stringify(params));
         req.url = url.pathname + url.search;
       }
     }

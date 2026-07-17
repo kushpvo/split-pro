@@ -1,6 +1,12 @@
+import superjson from 'superjson';
+
 import { createTRPCRouter } from '~/server/api/trpc';
 
-import { getExpenseDetailsProcedure, getGroupExpensesProcedure } from './routers/expense';
+import {
+  addOrEditExpenseApiProcedure,
+  getExpenseDetailsProcedure,
+  getGroupExpensesProcedure,
+} from './routers/expense';
 import { getAllGroupsProcedure, getGroupDetailsProcedure } from './routers/group';
 import { getFriendsProcedure, meProcedure } from './routers/user';
 
@@ -12,7 +18,7 @@ import { getFriendsProcedure, meProcedure } from './routers/user';
  * no per-procedure filter, so exposure is controlled structurally by only
  * mounting procedures here. Add new public endpoints one at a time.
  */
-export const apiRouter = createTRPCRouter({
+const _apiRouter = createTRPCRouter({
   user: createTRPCRouter({
     me: meProcedure,
     getFriends: getFriendsProcedure,
@@ -24,7 +30,41 @@ export const apiRouter = createTRPCRouter({
   expense: createTRPCRouter({
     getExpenseDetails: getExpenseDetailsProcedure,
     getGroupExpenses: getGroupExpensesProcedure,
+    addOrEditExpense: addOrEditExpenseApiProcedure,
   }),
 });
+
+/**
+ * API consumers send plain JSON. The server's tRPC instance uses superjson,
+ * whose `deserialize` returns `undefined` for plain objects. We swap in a
+ * forgiving deserializer that falls back to the raw value when superjson does
+ * not recognise the payload. Output serialization stays unchanged.
+ */
+const originalDeserialize = (superjson.deserialize as unknown as (data: unknown) => unknown).bind(
+  superjson,
+);
+_apiRouter._def._config.transformer = {
+  input: {
+    serialize: superjson.serialize.bind(superjson),
+    deserialize: (data: unknown) => {
+      if (null === data || undefined === data) {
+        return data;
+      }
+
+      const deserialized = originalDeserialize(data);
+      if (undefined === deserialized && 'object' === typeof data) {
+        return data;
+      }
+
+      return deserialized;
+    },
+  },
+  output: {
+    serialize: superjson.serialize.bind(superjson),
+    deserialize: originalDeserialize,
+  },
+};
+
+export const apiRouter = _apiRouter;
 
 export type ApiRouter = typeof apiRouter;

@@ -55,6 +55,55 @@ export const getGroupExpensesProcedure = groupProcedure
     return expenses;
   });
 
+const upsertExpenses = async (expenses: z.infer<typeof createExpenseSchema>[], userId: number) => {
+  const results = [];
+  for (const input of expenses) {
+    if (input.expenseId) {
+      await validateEditExpensePermission(input.expenseId, userId);
+    }
+    if (input.splitType === SplitType.CURRENCY_CONVERSION) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid split type' });
+    }
+
+    if (input.groupId !== null) {
+      const group = await db.group.findUnique({
+        where: { id: input.groupId },
+        select: { archivedAt: true },
+      });
+      if (!group) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Group not found' });
+      }
+      if (group.archivedAt) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Group is archived' });
+      }
+    }
+
+    try {
+      const expense = input.expenseId
+        ? await editExpense(input, userId)
+        : await createExpense(input, userId);
+
+      results.push(expense);
+    } catch (error) {
+      console.error(error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create expense',
+      });
+    }
+  }
+
+  return results;
+};
+
+export const addOrEditExpenseProcedure = protectedProcedure
+  .input(arrayify(createExpenseSchema))
+  .mutation(async ({ input: expenses, ctx }) => upsertExpenses(expenses, ctx.session.user.id));
+
+export const addOrEditExpenseApiProcedure = protectedProcedure
+  .input(z.array(createExpenseSchema))
+  .mutation(async ({ input: expenses, ctx }) => upsertExpenses(expenses, ctx.session.user.id));
+
 export const getExpenseDetailsProcedure = protectedProcedure
   .input(z.object({ expenseId: z.string() }))
   .query(async ({ input }) => {
@@ -239,48 +288,7 @@ export const expenseRouter = createTRPCRouter({
     return { balances };
   }),
 
-  addOrEditExpense: protectedProcedure
-    .input(arrayify(createExpenseSchema))
-    .mutation(async ({ input: expenses, ctx }) => {
-      const results = [];
-      for (const input of expenses) {
-        if (input.expenseId) {
-          await validateEditExpensePermission(input.expenseId, ctx.session.user.id);
-        }
-        if (input.splitType === SplitType.CURRENCY_CONVERSION) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid split type' });
-        }
-
-        if (input.groupId !== null) {
-          const group = await db.group.findUnique({
-            where: { id: input.groupId },
-            select: { archivedAt: true },
-          });
-          if (!group) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Group not found' });
-          }
-          if (group.archivedAt) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Group is archived' });
-          }
-        }
-
-        try {
-          const expense = input.expenseId
-            ? await editExpense(input, ctx.session.user.id)
-            : await createExpense(input, ctx.session.user.id);
-
-          results.push(expense);
-        } catch (error) {
-          console.error(error);
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create expense',
-          });
-        }
-      }
-
-      return results;
-    }),
+  addOrEditExpense: addOrEditExpenseProcedure,
 
   addOrEditCurrencyConversion: protectedProcedure
     .input(createCurrencyConversionSchema)
