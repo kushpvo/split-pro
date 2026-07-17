@@ -1,6 +1,6 @@
 import { createTRPCRouter } from '~/server/api/trpc';
 
-import { meProcedure } from './routers/user';
+import { getFriendsProcedure, meProcedure } from './routers/user';
 
 /**
  * Public REST API surface, served at `/api/v1` with API-key auth and documented
@@ -13,6 +13,7 @@ import { meProcedure } from './routers/user';
 export const apiRouter = createTRPCRouter({
   user: createTRPCRouter({
     me: meProcedure,
+    getFriends: getFriendsProcedure,
   }),
 });
 

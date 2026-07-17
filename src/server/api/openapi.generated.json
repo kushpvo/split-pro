@@ -14,9 +14,7 @@
     "/user.me": {
       "get": {
         "operationId": "user.me",
-        "tags": [
-          "user"
-        ],
+        "tags": ["user"],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -32,22 +30,13 @@
                           "type": "object",
                           "properties": {
                             "name": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": ["string", "null"]
                             },
                             "email": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": ["string", "null"]
                             },
                             "image": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": ["string", "null"]
                             },
                             "id": {
                               "type": "number"
@@ -56,10 +45,7 @@
                               "type": "string"
                             },
                             "defaultCurrency": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": ["string", "null"]
                             },
                             "obapiProviderId": {
                               "type": "string"
@@ -77,23 +63,110 @@
                               }
                             }
                           },
-                          "required": [
-                            "id",
-                            "currency",
-                            "preferredLanguage",
-                            "hiddenFriendIds"
-                          ],
+                          "required": ["id", "currency", "preferredLanguage", "hiddenFriendIds"],
                           "additionalProperties": false
                         }
                       },
-                      "required": [
-                        "data"
-                      ]
+                      "required": ["data"]
                     }
                   },
-                  "required": [
-                    "result"
-                  ]
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/user.getFriends": {
+      "get": {
+        "operationId": "user.getFriends",
+        "tags": ["user"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": ["string", "null"]
+                              },
+                              "id": {
+                                "type": "number"
+                              },
+                              "email": {
+                                "type": ["string", "null"]
+                              },
+                              "emailVerified": {
+                                "oneOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "image": {
+                                "type": ["string", "null"]
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "defaultCurrency": {
+                                "type": ["string", "null"]
+                              },
+                              "preferredLanguage": {
+                                "type": "string"
+                              },
+                              "bankingId": {
+                                "type": ["string", "null"]
+                              },
+                              "obapiProviderId": {
+                                "type": ["string", "null"]
+                              },
+                              "hiddenFriendIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "id",
+                              "email",
+                              "emailVerified",
+                              "image",
+                              "currency",
+                              "defaultCurrency",
+                              "preferredLanguage",
+                              "bankingId",
+                              "obapiProviderId",
+                              "hiddenFriendIds"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
                 }
               }
             }
@@ -126,10 +199,7 @@
             }
           }
         },
-        "required": [
-          "formErrors",
-          "fieldErrors"
-        ],
+        "required": ["formErrors", "fieldErrors"],
         "additionalProperties": false
       }
     },
@@ -193,11 +263,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "zodError",
-                        "code",
-                        "httpStatus"
-                      ],
+                      "required": ["zodError", "code", "httpStatus"],
                       "additionalProperties": false
                     },
                     "message": {
@@ -206,37 +272,16 @@
                     "code": {
                       "type": "number",
                       "enum": [
-                        -32700,
-                        -32600,
-                        -32603,
-                        -32001,
-                        -32002,
-                        -32003,
-                        -32004,
-                        -32005,
-                        -32008,
-                        -32009,
-                        -32012,
-                        -32013,
-                        -32015,
-                        -32022,
-                        -32028,
-                        -32029,
-                        -32099
+                        -32700, -32600, -32603, -32001, -32002, -32003, -32004, -32005, -32008,
+                        -32009, -32012, -32013, -32015, -32022, -32028, -32029, -32099
                       ]
                     }
                   },
-                  "required": [
-                    "data",
-                    "message",
-                    "code"
-                  ],
+                  "required": ["data", "message", "code"],
                   "additionalProperties": false
                 }
               },
-              "required": [
-                "error"
-              ]
+              "required": ["error"]
             }
           }
         }

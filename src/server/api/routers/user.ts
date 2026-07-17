@@ -34,18 +34,19 @@ const MAX_API_KEYS_PER_USER = 10;
  */
 export const meProcedure = protectedProcedure.query(({ ctx }) => ctx.session.user);
 
+export const getFriendsProcedure = protectedProcedure.query(async ({ ctx }) => {
+  const friends = await db.balanceView.findMany({
+    where: { userId: ctx.session.user.id, friendId: { notIn: ctx.session.user.hiddenFriendIds } },
+    include: { friend: true },
+    distinct: ['friendId'],
+  });
+
+  return friends.map((f) => f.friend);
+});
+
 export const userRouter = createTRPCRouter({
   me: meProcedure,
-
-  getFriends: protectedProcedure.query(async ({ ctx }) => {
-    const friends = await db.balanceView.findMany({
-      where: { userId: ctx.session.user.id, friendId: { notIn: ctx.session.user.hiddenFriendIds } },
-      include: { friend: true },
-      distinct: ['friendId'],
-    });
-
-    return friends.map((f) => f.friend);
-  }),
+  getFriends: getFriendsProcedure,
 
   getOwnExpenses: protectedProcedure.query(async ({ ctx }) => {
     const expenses = await db.expense.findMany({
@@ -429,8 +430,7 @@ export const userRouter = createTRPCRouter({
 
   getWebPushPublicKey: protectedProcedure.query(() => env.WEB_PUSH_PUBLIC_KEY ?? ''),
 
-  listApiKeys: protectedProcedure.query(async ({ ctx }) => {
-    return db.apiKey.findMany({
+  listApiKeys: protectedProcedure.query(async ({ ctx }) => db.apiKey.findMany({
       where: { userId: ctx.session.user.id },
       select: {
         id: true,
@@ -441,11 +441,12 @@ export const userRouter = createTRPCRouter({
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
-    });
-  }),
+    })),
 
   createApiKey: protectedProcedure
-    .input(z.object({ name: z.string().min(1).max(100), expiresAt: z.date().nullable().optional() }))
+    .input(
+      z.object({ name: z.string().min(1).max(100), expiresAt: z.date().nullable().optional() }),
+    )
     .mutation(async ({ input, ctx }) => {
       const keyCount = await db.apiKey.count({ where: { userId: ctx.session.user.id } });
       if (keyCount >= MAX_API_KEYS_PER_USER) {
