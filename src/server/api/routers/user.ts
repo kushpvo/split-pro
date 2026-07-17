@@ -83,10 +83,117 @@ export const getOwnExpensesApiProcedure = protectedProcedure
     return paginatedResult(items, total, input ?? undefined);
   });
 
+export const getBalancesWithFriendProcedure = protectedProcedure
+  .input(z.object({ friendId: z.number() }))
+  .query(async ({ input, ctx }) => {
+    const rawBalances = await db.balanceView.findMany({
+      where: {
+        userId: ctx.session.user.id,
+        friendId: input.friendId,
+        amount: { not: 0 },
+      },
+      include: {
+        group: {
+          select: {
+            name: true,
+            simplifyDebts: true,
+          },
+        },
+      },
+    });
+
+    const processedBalances = await Promise.all(
+      rawBalances.map(async ({ groupId, currency, amount, group }) => {
+        if (!group?.simplifyDebts || null === groupId) {
+          return {
+            friendId: input.friendId,
+            currency,
+            amount,
+            groupId,
+            groupName: group?.name ?? null,
+          };
+        }
+
+        const allGroupBalances = await db.balanceView.findMany({
+          where: { groupId, currency },
+        });
+
+        const simplified = simplifyDebts(allGroupBalances);
+
+        const simplifiedBalance = simplified.find(
+          (b) =>
+            b.userId === ctx.session.user.id &&
+            b.friendId === input.friendId &&
+            b.currency === currency,
+        );
+
+        return {
+          friendId: input.friendId,
+          currency,
+          amount: simplifiedBalance?.amount ?? 0n,
+          groupId,
+          groupName: group.name,
+        };
+      }),
+    );
+
+    return processedBalances.filter((b) => 0n !== b.amount);
+  });
+
+export const getFriendProcedure = protectedProcedure
+  .input(z.object({ friendId: z.number() }))
+  .query(async ({ input, ctx }) => {
+    const friend = await db.user.findUnique({
+      where: {
+        id: input.friendId,
+        userBalances: {
+          some: {
+            friendId: ctx.session.user.id,
+          },
+        },
+      },
+    });
+
+    if (!friend) {
+      return friend;
+    }
+
+    const [userAId, userBId] = toSortedFriendPair(ctx.session.user.id, input.friendId);
+
+    const friendDefaultSplit = await db.friendDefaultSplit.findUnique({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+    });
+
+    const defaultSplit =
+      friendDefaultSplit &&
+      (() => {
+        const parsedShares = z.record(z.string(), z.string()).safeParse(friendDefaultSplit.shares);
+        if (!parsedShares.success) {
+          return null;
+        }
+
+        return deserializeDefaultSplit({
+          splitType: friendDefaultSplit.splitType,
+          shares: parsedShares.data,
+        });
+      })();
+
+    return {
+      ...friend,
+      defaultSplit: defaultSplit ? serializeDefaultSplit(defaultSplit) : null,
+    };
+  });
+
 export const userRouter = createTRPCRouter({
   me: meProcedure,
   getFriends: getFriendsProcedure,
   getOwnExpenses: getOwnExpensesProcedure,
+  getBalancesWithFriend: getBalancesWithFriendProcedure,
 
   inviteFriend: protectedProcedure
     .input(z.object({ email: z.string(), sendInviteEmail: z.boolean().optional() }))
@@ -115,65 +222,6 @@ export const userRouter = createTRPCRouter({
       }
 
       return user;
-    }),
-
-  getBalancesWithFriend: protectedProcedure
-    .input(z.object({ friendId: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const rawBalances = await db.balanceView.findMany({
-        where: {
-          userId: ctx.session.user.id,
-          friendId: input.friendId,
-          amount: { not: 0 },
-        },
-        include: {
-          group: {
-            select: {
-              name: true,
-              simplifyDebts: true,
-            },
-          },
-        },
-      });
-
-      const processedBalances = await Promise.all(
-        rawBalances.map(async ({ groupId, currency, amount, group }) => {
-          // For non-simplifyDebts groups and non-group balances, use raw balance
-          if (!group?.simplifyDebts || null === groupId) {
-            return {
-              friendId: input.friendId,
-              currency,
-              amount,
-              groupId,
-              groupName: group?.name ?? null,
-            };
-          }
-
-          // For simplifyDebts groups, fetch all group balances and simplify
-          const allGroupBalances = await db.balanceView.findMany({
-            where: { groupId, currency },
-          });
-
-          const simplified = simplifyDebts(allGroupBalances);
-
-          const simplifiedBalance = simplified.find(
-            (b) =>
-              b.userId === ctx.session.user.id &&
-              b.friendId === input.friendId &&
-              b.currency === currency,
-          );
-
-          return {
-            friendId: input.friendId,
-            currency,
-            amount: simplifiedBalance?.amount ?? 0n,
-            groupId,
-            groupName: group.name,
-          };
-        }),
-      );
-
-      return processedBalances.filter((b) => 0n !== b.amount);
     }),
 
   updateUserDetail: protectedProcedure
@@ -219,56 +267,7 @@ export const userRouter = createTRPCRouter({
       await sendFeedbackEmail(input.feedback, ctx.session.user as User);
     }),
 
-  getFriend: protectedProcedure
-    .input(z.object({ friendId: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const friend = await db.user.findUnique({
-        where: {
-          id: input.friendId,
-          userBalances: {
-            some: {
-              friendId: ctx.session.user.id,
-            },
-          },
-        },
-      });
-
-      if (!friend) {
-        return friend;
-      }
-
-      const [userAId, userBId] = toSortedFriendPair(ctx.session.user.id, input.friendId);
-
-      const friendDefaultSplit = await db.friendDefaultSplit.findUnique({
-        where: {
-          userAId_userBId: {
-            userAId,
-            userBId,
-          },
-        },
-      });
-
-      const defaultSplit =
-        friendDefaultSplit &&
-        (() => {
-          const parsedShares = z
-            .record(z.string(), z.string())
-            .safeParse(friendDefaultSplit.shares);
-          if (!parsedShares.success) {
-            return null;
-          }
-
-          return deserializeDefaultSplit({
-            splitType: friendDefaultSplit.splitType,
-            shares: parsedShares.data,
-          });
-        })();
-
-      return {
-        ...friend,
-        defaultSplit: defaultSplit ? serializeDefaultSplit(defaultSplit) : null,
-      };
-    }),
+  getFriend: getFriendProcedure,
 
   upsertFriendDefaultSplit: protectedProcedure
     .input(

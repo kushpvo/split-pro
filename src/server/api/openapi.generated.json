@@ -236,6 +236,217 @@
         ]
       }
     },
+    "/user.getBalancesWithFriend": {
+      "get": {
+        "operationId": "user.getBalancesWithFriend",
+        "tags": ["user"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "friendId": {
+                                "type": "number"
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "integer",
+                                "format": "bigint"
+                              },
+                              "groupId": {
+                                "type": ["number", "null"]
+                              },
+                              "groupName": {
+                                "type": ["string", "null"]
+                              }
+                            },
+                            "required": ["friendId", "currency", "amount", "groupId", "groupName"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "input",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "friendId": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["friendId"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/user.getFriend": {
+      "get": {
+        "operationId": "user.getFriend",
+        "tags": ["user"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "defaultSplit": {
+                                  "oneOf": [
+                                    {
+                                      "$ref": "#/components/schemas/SerializedDefaultSplitConfig"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "name": {
+                                  "type": ["string", "null"]
+                                },
+                                "id": {
+                                  "type": "number"
+                                },
+                                "email": {
+                                  "type": ["string", "null"]
+                                },
+                                "emailVerified": {
+                                  "oneOf": [
+                                    {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "image": {
+                                  "type": ["string", "null"]
+                                },
+                                "currency": {
+                                  "type": "string"
+                                },
+                                "defaultCurrency": {
+                                  "type": ["string", "null"]
+                                },
+                                "preferredLanguage": {
+                                  "type": "string"
+                                },
+                                "bankingId": {
+                                  "type": ["string", "null"]
+                                },
+                                "obapiProviderId": {
+                                  "type": ["string", "null"]
+                                },
+                                "hiddenFriendIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "defaultSplit",
+                                "name",
+                                "id",
+                                "email",
+                                "emailVerified",
+                                "image",
+                                "currency",
+                                "defaultCurrency",
+                                "preferredLanguage",
+                                "bankingId",
+                                "obapiProviderId",
+                                "hiddenFriendIds"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "input",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "friendId": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["friendId"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
     "/group.getAllGroups": {
       "get": {
         "operationId": "group.getAllGroups",
