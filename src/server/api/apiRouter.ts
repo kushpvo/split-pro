@@ -4,6 +4,7 @@ import { createTRPCRouter } from '~/server/api/trpc';
 
 import {
   addOrEditExpenseApiProcedure,
+  getBalancesProcedure,
   getExpenseDetailsProcedure,
   getGroupExpensesProcedure,
 } from './routers/expense';
@@ -28,6 +29,7 @@ const _apiRouter = createTRPCRouter({
     getGroupDetails: getGroupDetailsProcedure,
   }),
   expense: createTRPCRouter({
+    getBalances: getBalancesProcedure,
     getExpenseDetails: getExpenseDetailsProcedure,
     getGroupExpenses: getGroupExpensesProcedure,
     addOrEditExpense: addOrEditExpenseApiProcedure,

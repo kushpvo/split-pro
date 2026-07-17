@@ -689,6 +689,140 @@
         ]
       }
     },
+    "/expense.getBalances": {
+      "get": {
+        "operationId": "expense.getBalances",
+        "tags": ["expense"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "balances": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "friendId": {
+                                    "type": "number"
+                                  },
+                                  "currencies": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "currency": {
+                                          "type": "string"
+                                        },
+                                        "amount": {
+                                          "type": "integer",
+                                          "format": "bigint"
+                                        }
+                                      },
+                                      "required": ["currency", "amount"],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "friend": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "id": {
+                                        "type": "number"
+                                      },
+                                      "email": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "emailVerified": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string",
+                                            "format": "date-time"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "image": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "currency": {
+                                        "type": "string"
+                                      },
+                                      "defaultCurrency": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "preferredLanguage": {
+                                        "type": "string"
+                                      },
+                                      "bankingId": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "obapiProviderId": {
+                                        "type": ["string", "null"]
+                                      },
+                                      "hiddenFriendIds": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "id",
+                                      "email",
+                                      "emailVerified",
+                                      "image",
+                                      "currency",
+                                      "defaultCurrency",
+                                      "preferredLanguage",
+                                      "bankingId",
+                                      "obapiProviderId",
+                                      "hiddenFriendIds"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "maxAmount": {
+                                    "type": "integer",
+                                    "format": "bigint"
+                                  }
+                                },
+                                "required": ["friendId", "currencies", "friend", "maxAmount"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["balances"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
     "/expense.getExpenseDetails": {
       "get": {
         "operationId": "expense.getExpenseDetails",
