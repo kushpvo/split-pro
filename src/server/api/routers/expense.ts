@@ -226,6 +226,92 @@ export const getAllExpensesProcedure = protectedProcedure.query(async ({ ctx }) 
   return expenses;
 });
 
+export const getExpensesWithFriendProcedure = protectedProcedure
+  .input(z.object({ friendId: z.number() }))
+  .query(async ({ input, ctx }) => {
+    const expenses = await db.expense.findMany({
+      where: {
+        AND: [
+          {
+            expenseParticipants: {
+              some: {
+                userId: input.friendId,
+                amount: {
+                  not: 0n,
+                },
+              },
+            },
+          },
+          {
+            expenseParticipants: {
+              some: {
+                userId: ctx.session.user.id,
+                amount: {
+                  not: 0n,
+                },
+              },
+            },
+          },
+          {
+            OR: [
+              {
+                paidBy: ctx.session.user.id,
+              },
+              {
+                paidBy: input.friendId,
+              },
+            ],
+          },
+          {
+            deletedBy: null,
+          },
+          {
+            OR: [
+              {
+                NOT: {
+                  splitType: SplitType.CURRENCY_CONVERSION,
+                },
+              },
+              {
+                NOT: {
+                  conversionToId: null,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      orderBy: {
+        expenseDate: 'desc',
+      },
+      include: {
+        expenseParticipants: {
+          where: {
+            OR: [
+              {
+                userId: ctx.session.user.id,
+              },
+              {
+                userId: input.friendId,
+              },
+            ],
+          },
+        },
+        paidByUser: true,
+        conversionTo: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            simplifyDebts: true,
+          },
+        },
+      },
+    });
+
+    return expenses;
+  });
+
 export const getExpenseDetailsProcedure = protectedProcedure
   .input(z.object({ expenseId: z.string() }))
   .query(async ({ input }) => {
@@ -383,91 +469,7 @@ export const expenseRouter = createTRPCRouter({
       }
     }),
 
-  getExpensesWithFriend: protectedProcedure
-    .input(z.object({ friendId: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const expenses = await db.expense.findMany({
-        where: {
-          AND: [
-            {
-              expenseParticipants: {
-                some: {
-                  userId: input.friendId,
-                  amount: {
-                    not: 0n,
-                  },
-                },
-              },
-            },
-            {
-              expenseParticipants: {
-                some: {
-                  userId: ctx.session.user.id,
-                  amount: {
-                    not: 0n,
-                  },
-                },
-              },
-            },
-            {
-              OR: [
-                {
-                  paidBy: ctx.session.user.id,
-                },
-                {
-                  paidBy: input.friendId,
-                },
-              ],
-            },
-            {
-              deletedBy: null,
-            },
-            {
-              OR: [
-                {
-                  NOT: {
-                    splitType: SplitType.CURRENCY_CONVERSION,
-                  },
-                },
-                {
-                  NOT: {
-                    conversionToId: null,
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        orderBy: {
-          expenseDate: 'desc',
-        },
-        include: {
-          expenseParticipants: {
-            where: {
-              OR: [
-                {
-                  userId: ctx.session.user.id,
-                },
-                {
-                  userId: input.friendId,
-                },
-              ],
-            },
-          },
-          paidByUser: true,
-          conversionTo: true,
-          group: {
-            select: {
-              id: true,
-              name: true,
-              simplifyDebts: true,
-            },
-          },
-        },
-      });
-
-      return expenses;
-    }),
+  getExpensesWithFriend: getExpensesWithFriendProcedure,
 
   getGroupExpenses: getGroupExpensesProcedure,
 
