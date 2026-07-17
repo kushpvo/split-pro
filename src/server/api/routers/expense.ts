@@ -20,6 +20,7 @@ import { SplitType } from '@prisma/client';
 import { DEFAULT_CATEGORY } from '~/lib/category';
 import { getUserMap } from './user';
 import { FriendBalance } from '~/components/Friend/FriendBalance';
+import { paginatedResult, paginationInput } from '~/server/api/pagination';
 
 export const getGroupExpensesProcedure = groupProcedure
   .input(z.object({ groupId: z.number() }))
@@ -386,6 +387,112 @@ export const getExpenseDetailsProcedure = protectedProcedure
     }
 
     return expense;
+  });
+
+/* ── API-specific paginated variants (offset-based) ─────────────────────── */
+
+export const getAllExpensesApiProcedure = protectedProcedure
+  .input(paginationInput.optional())
+  .query(async ({ input, ctx }) => {
+    const limit = input?.limit ?? 20;
+    const offset = input?.offset ?? 0;
+    const where = { userId: ctx.session.user.id };
+
+    const [items, total] = await Promise.all([
+      db.expenseParticipant.findMany({
+        where,
+        orderBy: { expense: { createdAt: 'desc' } },
+        include: {
+          expense: {
+            include: {
+              paidByUser: { select: { name: true, email: true, image: true, id: true } },
+              deletedByUser: { select: { name: true, email: true, image: true, id: true } },
+            },
+          },
+        },
+        take: limit,
+        skip: offset,
+      }),
+      db.expenseParticipant.count({ where }),
+    ]);
+
+    return paginatedResult(items, total, input ?? undefined);
+  });
+
+export const getExpensesWithFriendApiProcedure = protectedProcedure
+  .input(z.object({ friendId: z.number() }).extend(paginationInput.shape))
+  .query(async ({ input, ctx }) => {
+    const limit = input.limit ?? 20;
+    const offset = input.offset ?? 0;
+    const where = {
+      AND: [
+        { expenseParticipants: { some: { userId: input.friendId, amount: { not: 0n } } } },
+        { expenseParticipants: { some: { userId: ctx.session.user.id, amount: { not: 0n } } } },
+        { OR: [{ paidBy: ctx.session.user.id }, { paidBy: input.friendId }] },
+        { deletedBy: null },
+        {
+          OR: [
+            { NOT: { splitType: SplitType.CURRENCY_CONVERSION } },
+            { NOT: { conversionToId: null } },
+          ],
+        },
+      ],
+    };
+
+    const [items, total] = await Promise.all([
+      db.expense.findMany({
+        where,
+        orderBy: { expenseDate: 'desc' },
+        include: {
+          expenseParticipants: {
+            where: {
+              OR: [{ userId: ctx.session.user.id }, { userId: input.friendId }],
+            },
+          },
+          paidByUser: true,
+          conversionTo: true,
+          group: { select: { id: true, name: true, simplifyDebts: true } },
+        },
+        take: limit,
+        skip: offset,
+      }),
+      db.expense.count({ where }),
+    ]);
+
+    return paginatedResult(items, total, input);
+  });
+
+export const getGroupExpensesApiProcedure = groupProcedure
+  .input(z.object({ groupId: z.number() }).extend(paginationInput.shape))
+  .query(async ({ input, ctx }) => {
+    const limit = input.limit ?? 20;
+    const offset = input.offset ?? 0;
+    const where = {
+      groupId: input.groupId,
+      deletedBy: null,
+      OR: [
+        { NOT: { splitType: SplitType.CURRENCY_CONVERSION } },
+        { NOT: { conversionToId: null } },
+      ],
+    };
+
+    const [items, total] = await Promise.all([
+      ctx.db.expense.findMany({
+        where,
+        orderBy: { expenseDate: 'desc' },
+        include: {
+          expenseParticipants: true,
+          paidByUser: true,
+          deletedByUser: true,
+          conversionTo: true,
+        },
+        take: limit,
+        skip: offset,
+      }),
+      ctx.db.expense.count({ where }),
+    ]);
+
+    return paginatedResult(items, total, input);
   });
 
 export const expenseRouter = createTRPCRouter({

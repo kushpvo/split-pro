@@ -11,6 +11,7 @@ import {
 import { simplifyDebts } from '~/lib/simplify';
 import { generateApiKey } from '~/server/api/apiKey';
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc';
+import { paginatedResult, paginationInput } from '~/server/api/pagination';
 import { db } from '~/server/db';
 import { sendFeedbackEmail, sendInviteEmail } from '~/server/mailer';
 import { SplitwiseGroupSchema, SplitwiseUserSchema } from '~/types';
@@ -60,6 +61,27 @@ export const getOwnExpensesProcedure = protectedProcedure.query(async ({ ctx }) 
 
   return expenses;
 });
+
+export const getOwnExpensesApiProcedure = protectedProcedure
+  .input(paginationInput.optional())
+  .query(async ({ input, ctx }) => {
+    const limit = input?.limit ?? 20;
+    const offset = input?.offset ?? 0;
+    const where = { paidBy: ctx.session.user.id, deletedBy: null };
+
+    const [items, total] = await Promise.all([
+      db.expense.findMany({
+        where,
+        orderBy: { expenseDate: 'desc' },
+        include: { group: true },
+        take: limit,
+        skip: offset,
+      }),
+      db.expense.count({ where }),
+    ]);
+
+    return paginatedResult(items, total, input ?? undefined);
+  });
 
 export const userRouter = createTRPCRouter({
   me: meProcedure,

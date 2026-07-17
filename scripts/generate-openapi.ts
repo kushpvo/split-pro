@@ -40,8 +40,46 @@ async function main() {
   };
   doc.security = [{ bearerAuth: [] }];
 
+  // `@trpc/openapi`'s static analyzer infers Zod `.default()` as optional fields
+  // But doesn't emit the actual default values into the schema. Walk every query
+  // Parameter named "input" and inject defaults for `limit` (20) and `offset` (0)
+  // So the Scalar UI and generated clients pick them up automatically.
+  const defaultMap: Record<string, number> = { limit: 20, offset: 0 };
+  // Biome-ignore lint/suspicious/noExplicitAny: post-processing untyped OpenAPI JSON
+  const paths: any = doc.paths ?? {};
+
+  for (const op of Object.values(paths)) {
+    for (const operation of Object.values(op as Record<string, unknown>)) {
+      // Biome-ignore lint/suspicious/noExplicitAny: post-processing untyped OpenAPI JSON
+      const o: any = operation;
+      if (!Array.isArray(o.parameters)) {
+        continue;
+      }
+
+      for (const param of o.parameters as unknown[]) {
+        // Biome-ignore lint/suspicious/noExplicitAny: post-processing untyped OpenAPI JSON
+        const p: any = param;
+        if ('input' !== p.name) {
+          continue;
+        }
+        const props = p.content?.['application/json']?.schema?.properties;
+        if (!props) {
+          continue;
+        }
+
+        for (const [field, defaultValue] of Object.entries(defaultMap)) {
+          if (field in props && undefined === props[field].default) {
+            props[field].default = defaultValue;
+          }
+        }
+      }
+    }
+  }
+
   await writeFile(outputPath, `${JSON.stringify(doc, null, 2)}\n`);
-  console.log(`✓ Wrote OpenAPI spec (${Object.keys(doc.paths ?? {}).length} paths) to ${outputPath}`);
+  console.log(
+    `✓ Wrote OpenAPI spec (${Object.keys(doc.paths ?? {}).length} paths) to ${outputPath}`,
+  );
 }
 
 main().catch((error) => {

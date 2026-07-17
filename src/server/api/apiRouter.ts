@@ -4,14 +4,14 @@ import { createTRPCRouter } from '~/server/api/trpc';
 
 import {
   addOrEditExpenseApiProcedure,
-  getAllExpensesProcedure,
+  getAllExpensesApiProcedure,
   getBalancesProcedure,
   getExpenseDetailsProcedure,
-  getExpensesWithFriendProcedure,
-  getGroupExpensesProcedure,
+  getExpensesWithFriendApiProcedure,
+  getGroupExpensesApiProcedure,
 } from './routers/expense';
 import { getAllGroupsProcedure, getGroupDetailsProcedure } from './routers/group';
-import { getFriendsProcedure, getOwnExpensesProcedure, meProcedure } from './routers/user';
+import { getFriendsProcedure, getOwnExpensesApiProcedure, meProcedure } from './routers/user';
 
 /**
  * Public REST API surface, served at `/api/v1` with API-key auth and documented
@@ -25,18 +25,18 @@ const _apiRouter = createTRPCRouter({
   user: createTRPCRouter({
     me: meProcedure,
     getFriends: getFriendsProcedure,
-    getOwnExpenses: getOwnExpensesProcedure,
+    getOwnExpenses: getOwnExpensesApiProcedure,
   }),
   group: createTRPCRouter({
     getAllGroups: getAllGroupsProcedure,
     getGroupDetails: getGroupDetailsProcedure,
   }),
   expense: createTRPCRouter({
-    getAllExpenses: getAllExpensesProcedure,
+    getAllExpenses: getAllExpensesApiProcedure,
     getBalances: getBalancesProcedure,
     getExpenseDetails: getExpenseDetailsProcedure,
-    getExpensesWithFriend: getExpensesWithFriendProcedure,
-    getGroupExpenses: getGroupExpensesProcedure,
+    getExpensesWithFriend: getExpensesWithFriendApiProcedure,
+    getGroupExpenses: getGroupExpensesApiProcedure,
     addOrEditExpense: addOrEditExpenseApiProcedure,
   }),
 });
