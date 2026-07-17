@@ -21,6 +21,82 @@ import { DEFAULT_CATEGORY } from '~/lib/category';
 import { getUserMap } from './user';
 import { FriendBalance } from '~/components/Friend/FriendBalance';
 
+export const getExpenseDetailsProcedure = protectedProcedure
+  .input(z.object({ expenseId: z.string() }))
+  .query(async ({ input }) => {
+    const expense = await db.expense.findUnique({
+      where: {
+        id: input.expenseId,
+      },
+      include: {
+        expenseParticipants: {
+          include: {
+            user: true,
+          },
+        },
+        expenseNotes: true,
+        addedByUser: true,
+        paidByUser: true,
+        deletedByUser: true,
+        updatedByUser: true,
+        group: true,
+        recurrence: {
+          include: {
+            job: {
+              select: {
+                schedule: true,
+                command: true,
+              },
+            },
+          },
+        },
+        conversionTo: {
+          include: {
+            expenseParticipants: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (expense && expense.groupId !== null) {
+      const missingGroupMembers = await db.group.findUnique({
+        where: {
+          id: expense.groupId,
+        },
+        include: {
+          groupUsers: {
+            include: {
+              user: true,
+            },
+            where: {
+              userId: {
+                notIn: expense.expenseParticipants.map((ep) => ep.userId),
+              },
+            },
+          },
+        },
+      });
+      missingGroupMembers?.groupUsers.forEach((gu) => {
+        expense.expenseParticipants.push({
+          userId: gu.user.id,
+          expenseId: expense.id,
+          user: gu.user,
+          amount: 0n,
+        });
+      });
+    }
+
+    if (expense?.recurrence?.job.schedule) {
+      expense.recurrence.job.schedule = expense.recurrence.job.schedule.replaceAll('$', 'L');
+    }
+
+    return expense;
+  });
+
 export const expenseRouter = createTRPCRouter({
   getCumulatedBalances: protectedProcedure.query(async ({ ctx }) => {
     const cumulatedBalances = await db.balanceView.groupBy({
@@ -348,81 +424,7 @@ export const expenseRouter = createTRPCRouter({
       return expenses;
     }),
 
-  getExpenseDetails: protectedProcedure
-    .input(z.object({ expenseId: z.string() }))
-    .query(async ({ input }) => {
-      const expense = await db.expense.findUnique({
-        where: {
-          id: input.expenseId,
-        },
-        include: {
-          expenseParticipants: {
-            include: {
-              user: true,
-            },
-          },
-          expenseNotes: true,
-          addedByUser: true,
-          paidByUser: true,
-          deletedByUser: true,
-          updatedByUser: true,
-          group: true,
-          recurrence: {
-            include: {
-              job: {
-                select: {
-                  schedule: true,
-                  command: true,
-                },
-              },
-            },
-          },
-          conversionTo: {
-            include: {
-              expenseParticipants: {
-                include: {
-                  user: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (expense && expense.groupId !== null) {
-        const missingGroupMembers = await db.group.findUnique({
-          where: {
-            id: expense.groupId,
-          },
-          include: {
-            groupUsers: {
-              include: {
-                user: true,
-              },
-              where: {
-                userId: {
-                  notIn: expense.expenseParticipants.map((ep) => ep.userId),
-                },
-              },
-            },
-          },
-        });
-        missingGroupMembers?.groupUsers.forEach((gu) => {
-          expense.expenseParticipants.push({
-            userId: gu.user.id,
-            expenseId: expense.id,
-            user: gu.user,
-            amount: 0n,
-          });
-        });
-      }
-
-      if (expense?.recurrence?.job.schedule) {
-        expense.recurrence.job.schedule = expense.recurrence.job.schedule.replaceAll('$', 'L');
-      }
-
-      return expense;
-    }),
+  getExpenseDetails: getExpenseDetailsProcedure,
 
   getAllExpenses: protectedProcedure.query(async ({ ctx }) => {
     const expenses = await db.expenseParticipant.findMany({
