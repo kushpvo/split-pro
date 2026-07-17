@@ -189,6 +189,43 @@ export const getBalancesProcedure = protectedProcedure.query(async ({ ctx }) => 
   return { balances };
 });
 
+export const getAllExpensesProcedure = protectedProcedure.query(async ({ ctx }) => {
+  const expenses = await db.expenseParticipant.findMany({
+    where: {
+      userId: ctx.session.user.id,
+    },
+    orderBy: {
+      expense: {
+        createdAt: 'desc',
+      },
+    },
+    include: {
+      expense: {
+        include: {
+          paidByUser: {
+            select: {
+              name: true,
+              email: true,
+              image: true,
+              id: true,
+            },
+          },
+          deletedByUser: {
+            select: {
+              name: true,
+              email: true,
+              image: true,
+              id: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return expenses;
+});
+
 export const getExpenseDetailsProcedure = protectedProcedure
   .input(z.object({ expenseId: z.string() }))
   .query(async ({ input }) => {
@@ -436,42 +473,7 @@ export const expenseRouter = createTRPCRouter({
 
   getExpenseDetails: getExpenseDetailsProcedure,
 
-  getAllExpenses: protectedProcedure.query(async ({ ctx }) => {
-    const expenses = await db.expenseParticipant.findMany({
-      where: {
-        userId: ctx.session.user.id,
-      },
-      orderBy: {
-        expense: {
-          createdAt: 'desc',
-        },
-      },
-      include: {
-        expense: {
-          include: {
-            paidByUser: {
-              select: {
-                name: true,
-                email: true,
-                image: true,
-                id: true,
-              },
-            },
-            deletedByUser: {
-              select: {
-                name: true,
-                email: true,
-                image: true,
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return expenses;
-  }),
+  getAllExpenses: getAllExpensesProcedure,
 
   getRecurringExpenses: protectedProcedure.query(async ({ ctx }) => {
     const recurrences = await db.expenseRecurrence.findMany({
