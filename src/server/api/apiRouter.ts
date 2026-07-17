@@ -1,6 +1,6 @@
 import { createTRPCRouter } from '~/server/api/trpc';
 
-import { getAllGroupsProcedure } from './routers/group';
+import { getAllGroupsProcedure, getGroupDetailsProcedure } from './routers/group';
 import { getFriendsProcedure, meProcedure } from './routers/user';
 
 /**
@@ -18,6 +18,7 @@ export const apiRouter = createTRPCRouter({
   }),
   group: createTRPCRouter({
     getAllGroups: getAllGroupsProcedure,
+    getGroupDetails: getGroupDetailsProcedure,
   }),
 });
 

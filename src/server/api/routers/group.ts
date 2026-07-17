@@ -34,6 +34,40 @@ export const getAllGroupsProcedure = protectedProcedure.query(async ({ ctx }) =>
   return groups;
 });
 
+export const getGroupDetailsProcedure = groupProcedure.query(async ({ input, ctx }) => {
+  const group = await ctx.db.group.findUnique({
+    where: {
+      id: input.groupId,
+    },
+    include: {
+      groupUsers: {
+        include: {
+          user: true,
+        },
+      },
+      groupBalances: true,
+      groupDefaultSplit: true,
+    },
+  });
+
+  if (!group) {
+    return group;
+  }
+
+  if (group.simplifyDebts) {
+    group.groupBalances = simplifyDebts(group.groupBalances);
+  }
+
+  const defaultSplit =
+    group.groupDefaultSplit &&
+    parseSerializedDefaultSplit(group.groupDefaultSplit.splitType, group.groupDefaultSplit.shares);
+
+  return {
+    ...group,
+    defaultSplit,
+  };
+});
+
 export const groupRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
@@ -131,42 +165,7 @@ export const groupRouter = createTRPCRouter({
       return group;
     }),
 
-  getGroupDetails: groupProcedure.query(async ({ input, ctx }) => {
-    const group = await ctx.db.group.findUnique({
-      where: {
-        id: input.groupId,
-      },
-      include: {
-        groupUsers: {
-          include: {
-            user: true,
-          },
-        },
-        groupBalances: true,
-        groupDefaultSplit: true,
-      },
-    });
-
-    if (!group) {
-      return group;
-    }
-
-    if (group.simplifyDebts) {
-      group.groupBalances = simplifyDebts(group.groupBalances);
-    }
-
-    const defaultSplit =
-      group.groupDefaultSplit &&
-      parseSerializedDefaultSplit(
-        group.groupDefaultSplit.splitType,
-        group.groupDefaultSplit.shares,
-      );
-
-    return {
-      ...group,
-      defaultSplit,
-    };
-  }),
+  getGroupDetails: getGroupDetailsProcedure,
 
   getGroupTotals: groupProcedure.query(async ({ input, ctx }) => {
     const totals = await ctx.db.expense.groupBy({

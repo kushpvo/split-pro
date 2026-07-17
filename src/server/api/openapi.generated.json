@@ -364,10 +364,540 @@
           }
         }
       }
+    },
+    "/group.getGroupDetails": {
+      "get": {
+        "operationId": "group.getGroupDetails",
+        "tags": ["group"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "defaultSplit": {
+                                  "oneOf": [
+                                    {
+                                      "$ref": "#/components/schemas/SerializedDefaultSplitConfig"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "groupDefaultSplit": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "groupId": {
+                                          "type": "number"
+                                        },
+                                        "createdAt": {
+                                          "type": "string",
+                                          "format": "date-time"
+                                        },
+                                        "updatedAt": {
+                                          "type": "string",
+                                          "format": "date-time"
+                                        },
+                                        "splitType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "EQUAL",
+                                            "PERCENTAGE",
+                                            "EXACT",
+                                            "SHARE",
+                                            "ADJUSTMENT",
+                                            "SETTLEMENT",
+                                            "CURRENCY_CONVERSION"
+                                          ]
+                                        },
+                                        "shares": {
+                                          "oneOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "$ref": "#/components/schemas/RecursiveType"
+                                              }
+                                            },
+                                            {
+                                              "$ref": "#/components/schemas/JsonArray"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "groupId",
+                                        "createdAt",
+                                        "updatedAt",
+                                        "splitType",
+                                        "shares"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "groupUsers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "user": {
+                                        "type": "object",
+                                        "properties": {
+                                          "name": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "id": {
+                                            "type": "number"
+                                          },
+                                          "email": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "emailVerified": {
+                                            "oneOf": [
+                                              {
+                                                "type": "string",
+                                                "format": "date-time"
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "image": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "currency": {
+                                            "type": "string"
+                                          },
+                                          "defaultCurrency": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "preferredLanguage": {
+                                            "type": "string"
+                                          },
+                                          "bankingId": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "obapiProviderId": {
+                                            "type": ["string", "null"]
+                                          },
+                                          "hiddenFriendIds": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "number"
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "name",
+                                          "id",
+                                          "email",
+                                          "emailVerified",
+                                          "image",
+                                          "currency",
+                                          "defaultCurrency",
+                                          "preferredLanguage",
+                                          "bankingId",
+                                          "obapiProviderId",
+                                          "hiddenFriendIds"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "userId": {
+                                        "type": "number"
+                                      },
+                                      "groupId": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": ["user", "userId", "groupId"],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "groupBalances": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "userId": {
+                                        "type": "number"
+                                      },
+                                      "currency": {
+                                        "type": "string"
+                                      },
+                                      "friendId": {
+                                        "type": "number"
+                                      },
+                                      "groupId": {
+                                        "type": ["number", "null"]
+                                      },
+                                      "amount": {
+                                        "type": "integer",
+                                        "format": "bigint"
+                                      },
+                                      "createdAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      },
+                                      "updatedAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      }
+                                    },
+                                    "required": [
+                                      "userId",
+                                      "currency",
+                                      "friendId",
+                                      "groupId",
+                                      "amount",
+                                      "createdAt",
+                                      "updatedAt"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "number"
+                                },
+                                "userId": {
+                                  "type": "number"
+                                },
+                                "image": {
+                                  "type": ["string", "null"]
+                                },
+                                "defaultCurrency": {
+                                  "type": ["string", "null"]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "publicId": {
+                                  "type": "string"
+                                },
+                                "splitwiseGroupId": {
+                                  "type": ["string", "null"]
+                                },
+                                "simplifyDebts": {
+                                  "type": "boolean"
+                                },
+                                "archivedAt": {
+                                  "oneOf": [
+                                    {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "defaultSplit",
+                                "groupDefaultSplit",
+                                "groupUsers",
+                                "groupBalances",
+                                "name",
+                                "id",
+                                "userId",
+                                "image",
+                                "defaultCurrency",
+                                "createdAt",
+                                "updatedAt",
+                                "publicId",
+                                "splitwiseGroupId",
+                                "simplifyDebts",
+                                "archivedAt"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "input",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupId": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["groupId"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "SerializedDefaultSplitConfig": {
+        "type": "object",
+        "properties": {
+          "splitType": {
+            "type": "string",
+            "enum": ["EQUAL", "PERCENTAGE", "SHARE"]
+          },
+          "shares": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["splitType", "shares"],
+        "additionalProperties": false
+      },
+      "RecursiveType": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RecursiveType"
+            }
+          },
+          {
+            "$ref": "#/components/schemas/JsonArray"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "JsonArray": {
+        "type": "object",
+        "properties": {
+          "length": {
+            "type": "number"
+          },
+          "toString": {
+            "type": "object"
+          },
+          "toLocaleString": {
+            "type": "object"
+          },
+          "pop": {
+            "type": "object"
+          },
+          "push": {
+            "type": "object"
+          },
+          "concat": {
+            "type": "object"
+          },
+          "join": {
+            "type": "object"
+          },
+          "reverse": {
+            "type": "object"
+          },
+          "shift": {
+            "type": "object"
+          },
+          "slice": {
+            "type": "object"
+          },
+          "sort": {
+            "type": "object"
+          },
+          "splice": {
+            "type": "object"
+          },
+          "unshift": {
+            "type": "object"
+          },
+          "indexOf": {
+            "type": "object"
+          },
+          "lastIndexOf": {
+            "type": "object"
+          },
+          "every": {
+            "type": "object"
+          },
+          "some": {
+            "type": "object"
+          },
+          "forEach": {
+            "type": "object"
+          },
+          "map": {
+            "type": "object"
+          },
+          "filter": {
+            "type": "object"
+          },
+          "reduce": {
+            "type": "object"
+          },
+          "reduceRight": {
+            "type": "object"
+          },
+          "find": {
+            "type": "object"
+          },
+          "findIndex": {
+            "type": "object"
+          },
+          "fill": {
+            "type": "object"
+          },
+          "copyWithin": {
+            "type": "object"
+          },
+          "entries": {
+            "type": "object"
+          },
+          "keys": {
+            "type": "object"
+          },
+          "values": {
+            "type": "object"
+          },
+          "includes": {
+            "type": "object"
+          },
+          "flatMap": {
+            "type": "object"
+          },
+          "flat": {
+            "type": "object"
+          },
+          "at": {
+            "type": "object"
+          },
+          "findLast": {
+            "type": "object"
+          },
+          "findLastIndex": {
+            "type": "object"
+          },
+          "toReversed": {
+            "type": "object"
+          },
+          "toSorted": {
+            "type": "object"
+          },
+          "toSpliced": {
+            "type": "object"
+          },
+          "with": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "length",
+          "toString",
+          "toLocaleString",
+          "pop",
+          "push",
+          "concat",
+          "join",
+          "reverse",
+          "shift",
+          "slice",
+          "sort",
+          "splice",
+          "unshift",
+          "indexOf",
+          "lastIndexOf",
+          "every",
+          "some",
+          "forEach",
+          "map",
+          "filter",
+          "reduce",
+          "reduceRight",
+          "find",
+          "findIndex",
+          "fill",
+          "copyWithin",
+          "entries",
+          "keys",
+          "values",
+          "includes",
+          "flatMap",
+          "flat",
+          "at",
+          "findLast",
+          "findLastIndex",
+          "toReversed",
+          "toSorted",
+          "toSpliced",
+          "with"
+        ],
+        "additionalProperties": false
+      },
       "typeToFlattenedError": {
         "type": "object",
         "properties": {
