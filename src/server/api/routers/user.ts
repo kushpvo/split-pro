@@ -44,26 +44,27 @@ export const getFriendsProcedure = protectedProcedure.query(async ({ ctx }) => {
   return friends.map((f) => f.friend);
 });
 
+export const getOwnExpensesProcedure = protectedProcedure.query(async ({ ctx }) => {
+  const expenses = await db.expense.findMany({
+    where: {
+      paidBy: ctx.session.user.id,
+      deletedBy: null,
+    },
+    orderBy: {
+      expenseDate: 'desc',
+    },
+    include: {
+      group: true,
+    },
+  });
+
+  return expenses;
+});
+
 export const userRouter = createTRPCRouter({
   me: meProcedure,
   getFriends: getFriendsProcedure,
-
-  getOwnExpenses: protectedProcedure.query(async ({ ctx }) => {
-    const expenses = await db.expense.findMany({
-      where: {
-        paidBy: ctx.session.user.id,
-        deletedBy: null,
-      },
-      orderBy: {
-        expenseDate: 'desc',
-      },
-      include: {
-        group: true,
-      },
-    });
-
-    return expenses;
-  }),
+  getOwnExpenses: getOwnExpensesProcedure,
 
   inviteFriend: protectedProcedure
     .input(z.object({ email: z.string(), sendInviteEmail: z.boolean().optional() }))
@@ -430,7 +431,8 @@ export const userRouter = createTRPCRouter({
 
   getWebPushPublicKey: protectedProcedure.query(() => env.WEB_PUSH_PUBLIC_KEY ?? ''),
 
-  listApiKeys: protectedProcedure.query(async ({ ctx }) => db.apiKey.findMany({
+  listApiKeys: protectedProcedure.query(async ({ ctx }) =>
+    db.apiKey.findMany({
       where: { userId: ctx.session.user.id },
       select: {
         id: true,
@@ -441,7 +443,8 @@ export const userRouter = createTRPCRouter({
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
-    })),
+    }),
+  ),
 
   createApiKey: protectedProcedure
     .input(

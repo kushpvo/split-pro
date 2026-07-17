@@ -11,7 +11,7 @@ import {
   getGroupExpensesProcedure,
 } from './routers/expense';
 import { getAllGroupsProcedure, getGroupDetailsProcedure } from './routers/group';
-import { getFriendsProcedure, meProcedure } from './routers/user';
+import { getFriendsProcedure, getOwnExpensesProcedure, meProcedure } from './routers/user';
 
 /**
  * Public REST API surface, served at `/api/v1` with API-key auth and documented
@@ -25,6 +25,7 @@ const _apiRouter = createTRPCRouter({
   user: createTRPCRouter({
     me: meProcedure,
     getFriends: getFriendsProcedure,
+    getOwnExpenses: getOwnExpensesProcedure,
   }),
   group: createTRPCRouter({
     getAllGroups: getAllGroupsProcedure,
