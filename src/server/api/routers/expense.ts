@@ -21,6 +21,40 @@ import { DEFAULT_CATEGORY } from '~/lib/category';
 import { getUserMap } from './user';
 import { FriendBalance } from '~/components/Friend/FriendBalance';
 
+export const getGroupExpensesProcedure = groupProcedure
+  .input(z.object({ groupId: z.number() }))
+  .query(async ({ input, ctx }) => {
+    const expenses = await ctx.db.expense.findMany({
+      where: {
+        groupId: input.groupId,
+        deletedBy: null,
+        OR: [
+          {
+            NOT: {
+              splitType: SplitType.CURRENCY_CONVERSION,
+            },
+          },
+          {
+            NOT: {
+              conversionToId: null,
+            },
+          },
+        ],
+      },
+      orderBy: {
+        expenseDate: 'desc',
+      },
+      include: {
+        expenseParticipants: true,
+        paidByUser: true,
+        deletedByUser: true,
+        conversionTo: true,
+      },
+    });
+
+    return expenses;
+  });
+
 export const getExpenseDetailsProcedure = protectedProcedure
   .input(z.object({ expenseId: z.string() }))
   .query(async ({ input }) => {
@@ -390,39 +424,7 @@ export const expenseRouter = createTRPCRouter({
       return expenses;
     }),
 
-  getGroupExpenses: groupProcedure
-    .input(z.object({ groupId: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const expenses = await ctx.db.expense.findMany({
-        where: {
-          groupId: input.groupId,
-          deletedBy: null,
-          OR: [
-            {
-              NOT: {
-                splitType: SplitType.CURRENCY_CONVERSION,
-              },
-            },
-            {
-              NOT: {
-                conversionToId: null,
-              },
-            },
-          ],
-        },
-        orderBy: {
-          expenseDate: 'desc',
-        },
-        include: {
-          expenseParticipants: true,
-          paidByUser: true,
-          deletedByUser: true,
-          conversionTo: true,
-        },
-      });
-
-      return expenses;
-    }),
+  getGroupExpenses: getGroupExpensesProcedure,
 
   getExpenseDetails: getExpenseDetailsProcedure,
 
