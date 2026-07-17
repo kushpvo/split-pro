@@ -13,6 +13,27 @@ import {
   serializeDefaultSplit,
 } from '~/lib/defaultSplit';
 
+export const getAllGroupsProcedure = protectedProcedure.query(async ({ ctx }) => {
+  const groups = await ctx.db.groupUser.findMany({
+    where: {
+      userId: ctx.session.user.id,
+    },
+    include: {
+      group: {
+        include: {
+          groupUsers: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return groups;
+});
+
 export const groupRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
@@ -33,26 +54,7 @@ export const groupRouter = createTRPCRouter({
       return group;
     }),
 
-  getAllGroups: protectedProcedure.query(async ({ ctx }) => {
-    const groups = await ctx.db.groupUser.findMany({
-      where: {
-        userId: ctx.session.user.id,
-      },
-      include: {
-        group: {
-          include: {
-            groupUsers: {
-              include: {
-                user: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return groups;
-  }),
+  getAllGroups: getAllGroupsProcedure,
 
   getAllGroupsWithBalances: protectedProcedure
     .input(z.object({ getArchived: z.boolean() }).optional())

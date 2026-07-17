@@ -176,6 +176,194 @@
           }
         }
       }
+    },
+    "/group.getAllGroups": {
+      "get": {
+        "operationId": "group.getAllGroups",
+        "tags": ["group"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "group": {
+                                "type": "object",
+                                "properties": {
+                                  "groupUsers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "user": {
+                                          "type": "object",
+                                          "properties": {
+                                            "name": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "id": {
+                                              "type": "number"
+                                            },
+                                            "email": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "emailVerified": {
+                                              "oneOf": [
+                                                {
+                                                  "type": "string",
+                                                  "format": "date-time"
+                                                },
+                                                {
+                                                  "type": "null"
+                                                }
+                                              ]
+                                            },
+                                            "image": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "currency": {
+                                              "type": "string"
+                                            },
+                                            "defaultCurrency": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "preferredLanguage": {
+                                              "type": "string"
+                                            },
+                                            "bankingId": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "obapiProviderId": {
+                                              "type": ["string", "null"]
+                                            },
+                                            "hiddenFriendIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "name",
+                                            "id",
+                                            "email",
+                                            "emailVerified",
+                                            "image",
+                                            "currency",
+                                            "defaultCurrency",
+                                            "preferredLanguage",
+                                            "bankingId",
+                                            "obapiProviderId",
+                                            "hiddenFriendIds"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "userId": {
+                                          "type": "number"
+                                        },
+                                        "groupId": {
+                                          "type": "number"
+                                        }
+                                      },
+                                      "required": ["user", "userId", "groupId"],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "id": {
+                                    "type": "number"
+                                  },
+                                  "userId": {
+                                    "type": "number"
+                                  },
+                                  "image": {
+                                    "type": ["string", "null"]
+                                  },
+                                  "defaultCurrency": {
+                                    "type": ["string", "null"]
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "updatedAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "publicId": {
+                                    "type": "string"
+                                  },
+                                  "splitwiseGroupId": {
+                                    "type": ["string", "null"]
+                                  },
+                                  "simplifyDebts": {
+                                    "type": "boolean"
+                                  },
+                                  "archivedAt": {
+                                    "oneOf": [
+                                      {
+                                        "type": "string",
+                                        "format": "date-time"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "groupUsers",
+                                  "name",
+                                  "id",
+                                  "userId",
+                                  "image",
+                                  "defaultCurrency",
+                                  "createdAt",
+                                  "updatedAt",
+                                  "publicId",
+                                  "splitwiseGroupId",
+                                  "simplifyDebts",
+                                  "archivedAt"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "userId": {
+                                "type": "number"
+                              },
+                              "groupId": {
+                                "type": "number"
+                              }
+                            },
+                            "required": ["group", "userId", "groupId"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["data"]
+                    }
+                  },
+                  "required": ["result"]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
     }
   },
   "components": {
