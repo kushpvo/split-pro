@@ -16,14 +16,30 @@ const handler = createNextApiHandler({
       : undefined,
 });
 
+const isPlainValue = (v: string): string | number | boolean => {
+  if ('true' === v) {
+    return true;
+  }
+  if ('false' === v) {
+    return false;
+  }
+  const n = Number(v);
+  if (!Number.isNaN(n) && String(n) === v) {
+    return n;
+  }
+
+  return v;
+};
+
 /**
  * Public REST API handler (API-key auth), mounted at `/api/v1/*`, e.g.
- * `GET /api/v1/user.me`. Kept separate from the app's cookie-authed
- * `/api/trpc` handler so API keys can only reach the curated `apiRouter`.
+ * `GET /api/v1/user.me`. The wrapper:
  *
- * The wrapper re-encodes plain-JSON `?input=` payloads as superjson format
- * ({json: …}) so the server transformer can deserialise them correctly.
- * API consumers send regular JSON; the wrapper bridges the two worlds.
+ * 1. Converts individual query params (`?groupId=150`) into tRPC's
+ *    `?input={"groupId":150}` format, coercing values to numbers/booleans
+ *    where obvious.
+ * 2. Wraps plain-JSON `?input=` payloads as superjson format ({json: …}) so
+ *    the server transformer (superjson) can deserialise them correctly.
  */
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if ('GET' === req.method && req.url) {
@@ -31,6 +47,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const rawInput = url.searchParams.get('input');
 
     if (rawInput) {
+      /* — `?input=<JSON>` — wrap in superjson format if needed */
       try {
         const parsed = JSON.parse(rawInput);
 
@@ -40,6 +57,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
       } catch {
         /* Leave malformed input alone — tRPC will surface the parse error */
+      }
+    } else {
+      /* — individual query params — build an `input` JSON object */
+      const params: Record<string, unknown> = {};
+
+      url.searchParams.forEach((value, key) => {
+        if ('batch' !== key && 'trpc' !== key) {
+          params[key] = isPlainValue(value);
+        }
+      });
+
+      if (0 < Object.keys(params).length) {
+        url.searchParams.set('input', JSON.stringify({ json: params }));
+        req.url = url.pathname + url.search;
       }
     }
   }
