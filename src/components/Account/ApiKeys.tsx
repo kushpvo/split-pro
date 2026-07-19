@@ -120,7 +120,8 @@ export const ApiKeys: React.FC<React.PropsWithChildren> = ({ children }) => {
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{key.name}</span>
                   <span className="text-xs text-gray-500">
-                    {key.partialKey}… · {key.lastUsedAt ? `used ${key.lastUsedAt.toLocaleDateString()}` : 'never used'}
+                    {key.partialKey}… ·{' '}
+                    {key.lastUsedAt ? `used ${key.lastUsedAt.toLocaleDateString()}` : 'never used'}
                   </span>
                 </div>
                 <Button
